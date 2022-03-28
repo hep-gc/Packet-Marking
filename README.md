@@ -1,3 +1,3 @@
-This repository contains code for editing the flow labels of IPv6 packets using ebpf. It requires the package python3-bcc (available on RHEL8 and later), and the python package pyroute2. 
+This repository contains code for editing the flow labels of IPv6 packets using ebpf. It requires the package python3-bcc (available on RHEL8 derivatives and later), and the python package pyroute2. 
 
 When flowlabel_two.py is run, it puts ingress and egress ebpf filters on the loopback interface. The ingress filter reads the flow label, although it currently doesn't do anything with it. The egress filter sets the flow label to a currently hard-coded value, and then prints it out. Flowlabel_two.py will run infinitely until it gets a ctrl-C, at which point it will print out a message for each IPv6 packet sent by the loopback interface.
