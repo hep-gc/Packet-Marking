@@ -54,7 +54,7 @@ int set_flow_label(struct __sk_buff *skb)
         u64 *flowlabel = flowlabel_table.lookup(&ip6_hi);
         u64 *flowlabel2 = flowlabel_table.lookup(&ip6_lo);
 
-        if (flowlabel && flowlabel2) 
+        if (flowlabel && flowlabel2 && *flowlabel == *flowlabel2) 
         {
             bpf_trace_printk("%d\\n", *flowlabel);
             ip6->flow_label = *flowlabel;
