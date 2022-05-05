@@ -20,7 +20,8 @@ text = """
 BPF_HASH(flowlabel_table, u64, u64, 256);
 BPF_HISTOGRAM(flowlabels_set, u64, 256);
 BPF_HISTOGRAM(flowlabels_received, u64, 256);
-BPF_ARRAY(counts, u64, 1);
+BPF_ARRAY(counts_sent, u64, 1);
+BPF_ARRAY(counts_received, u64, 1);
 
 int get_flow_label(struct __sk_buff *skb)
 {
@@ -32,7 +33,7 @@ int get_flow_label(struct __sk_buff *skb)
     {
         struct ip6_t *ip6 = cursor_advance(cursor, sizeof(*ip6));
         flowlabels_received.increment(ip6->flow_label);
-        counts.increment(0);
+        counts_received.increment(0);
         return -1;
     }
     else
@@ -49,6 +50,8 @@ int set_flow_label(struct __sk_buff *skb)
     // IPv6
     if (ethernet->type == 0x86DD)
     {
+        counts_sent.increment(0);
+
         struct ip6_t *ip6 = cursor_advance(cursor, sizeof(*ip6));
 
         u64 ip6_hi = ip6->dst_hi;
@@ -78,7 +81,8 @@ try:
     flowlabel_table = b.get_table('flowlabel_table')
     flowlabels_set = b.get_table('flowlabels_set')
     flowlabels_received = b.get_table('flowlabels_received')
-    counts = b.get_table('counts')
+    counts_sent = b.get_table('counts_sent')
+    counts_received = b.get_table('counts_received')
 
     ip6_address_from_plugin = "abcd::1"
     bitpattern_from_plugin = 6
@@ -108,7 +112,8 @@ finally:
     ipr.tc("del", "ingress", idx, "ffff:")
     ipr.tc("del", "sfq", idx, "1:")
 
-    print("IPv6 packets received: ", counts[0].value)
+    print("IPv6 packets sent: ", counts_sent[0].value)
+    print("IPv6 packets received: ", counts_received[0].value)
     for item in flowlabels_set.items():
         print("Flow label set: ", item[0].value)
         print("Counts: ", item[1].value)
