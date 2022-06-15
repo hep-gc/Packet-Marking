@@ -53,21 +53,32 @@ int set_flow_label(struct __sk_buff *skb)
         counts_sent.increment(0);
 
         struct ip6_t *ip6 = cursor_advance(cursor, sizeof(*ip6));
-        struct tcp_t *tcp = cursor_advance(cursor, sizeof(*tcp));
 
-        u64 ip6_hi = ip6->dst_hi;
-        u64 ip6_lo = ip6->dst_lo;
-        u64 dport = tcp->dst_port;
-
-        //u64 *flowlabel = flowlabel_table.lookup(&ip6_hi);
-        //u64 *flowlabel2 = flowlabel_table.lookup(&ip6_lo);
-        u64 *flowlabel = flowlabel_table.lookup(&dport);
-
-        //if (flowlabel && flowlabel2 && *flowlabel == *flowlabel2) 
-        if (flowlabel)
+        // TCP 
+        if (ip6->next_header == 6)
         {
-            ip6->flow_label = *flowlabel;
-            flowlabels_set.increment(*flowlabel);
+            struct tcp_t *tcp = cursor_advance(cursor, sizeof(*tcp));
+            u64 dport = tcp->dst_port;
+            u64 *flowlabel = flowlabel_table.lookup(&dport);
+
+            if (flowlabel)
+            {
+                ip6->flow_label = *flowlabel;
+                flowlabels_set.increment(*flowlabel);
+            }
+        }
+        // UDP
+        else if (ip6->next_header == 17)
+        {
+            struct udp_t *udp = cursor_advance(cursor, sizeof(*udp));
+            u64 dport = udp->dport;
+            u64 *flowlabel = flowlabel_table.lookup(&dport);
+
+            if (flowlabel)
+            {
+                ip6->flow_label = *flowlabel;
+                flowlabels_set.increment(*flowlabel);
+            }
         }
 
         return -1;
